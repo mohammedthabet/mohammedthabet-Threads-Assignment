@@ -93,4 +93,54 @@ public sealed class ProductRepository
 
         return true;
     }
+    public async Task<bool> ReleaseStockAsync(
+        int productId,
+        int qty,
+        CancellationToken ct = default)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(productId);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(qty);
+
+        await SimulatedLatency.DatabaseWriteAsync(
+            Source,
+            $"Release {qty} unit(s) of Product #{productId}",
+            ct);
+
+        bool released = false;
+
+        await _store.UpdateAsync<Product>(
+            DataFiles.Products,
+            products =>
+            {
+                Product? product = products.FirstOrDefault(
+                    item => item.Id == productId);
+
+                if (product is null)
+                    return products;
+
+                product.StockQuantity = checked(
+                    product.StockQuantity + qty);
+
+                released = true;
+                return products;
+            },
+            ct);
+
+        if (!released)
+        {
+            Log.Error(
+                Source,
+                $"Cannot release stock for Product #{productId}.");
+
+            return false;
+        }
+
+        await SimulatedLatency.CommitAsync(Source, ct);
+
+        Log.Success(
+            Source,
+            $"Released {qty} unit(s) of Product #{productId}.");
+
+        return true;
+    }
 }

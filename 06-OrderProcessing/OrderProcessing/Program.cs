@@ -1,23 +1,39 @@
 ﻿using OrderProcessing.Phase1;
+using OrderProcessing.Phase2;
 
 internal static class Program
 {
     private static async Task Main(string[] args)
     {
-        if (args.Length > 0 && string.Equals(args[0], "phase1", StringComparison.OrdinalIgnoreCase))
+        if (args.Length > 0)
         {
-            await new Phase1Runner().RunAsync();
-            return;
+            switch (args[0].ToLowerInvariant())
+            {
+                case "phase1":
+                    await new Phase1Runner().RunAsync();
+                    return;
+
+                case "phase2":
+                    await new Phase2Runner().RunAsync();
+                    return;
+            }
         }
 
         Console.WriteLine("Order Processing System");
-        Console.WriteLine("1. Run Phase 1 (Sync vs Async)");
+        Console.WriteLine("1. Phase 1 - Sync vs Async");
+        Console.WriteLine("2. Phase 2 - Concurrent Processing");
         Console.WriteLine("0. Exit");
         Console.Write("Select an option: ");
 
-        string? choice = Console.ReadLine();
+        switch (Console.ReadLine())
+        {
+            case "1":
+                await new Phase1Runner().RunAsync();
+                break;
 
-        if (choice == "1")
-            await new Phase1Runner().RunAsync();
+            case "2":
+                await new Phase2Runner().RunAsync();
+                break;
+        }
     }
 }
