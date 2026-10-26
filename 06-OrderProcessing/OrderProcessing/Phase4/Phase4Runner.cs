@@ -41,10 +41,13 @@ public sealed class CustomerDashboardService(
         }
         catch
         {
+            ct.ThrowIfCancellationRequested();
+
             Exception[] failures = new Task[] { profileTask, ordersTask, paymentsTask, emailsTask }
                 .Where(t => t.IsFaulted)
                 .SelectMany(t => t.Exception!.Flatten().InnerExceptions)
                 .ToArray();
+
             throw new AggregateException($"Customer dashboard load failed for customer #{customerId}.", failures);
         }
 

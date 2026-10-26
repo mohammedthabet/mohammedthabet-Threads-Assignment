@@ -45,7 +45,16 @@ internal static class Program
                         else if (mode == "phase3")
                             await new Phase3Runner().RunAsync(cts.Token);
                         else
-                            await new Phase4Runner().RunAsync(cts.Token);
+                        {
+                            try
+                            {
+                                await new Phase4Runner().RunAsync(cts.Token);
+                            }
+                            catch (OperationCanceledException) when (cts.IsCancellationRequested)
+                            {
+                                Console.WriteLine("Phase execution cancelled.");
+                            }
+                        }
                     }
                     return;
             }
