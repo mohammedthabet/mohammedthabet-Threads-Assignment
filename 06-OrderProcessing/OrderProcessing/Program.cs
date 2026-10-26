@@ -1,5 +1,6 @@
 ﻿using OrderProcessing.Phase1;
 using OrderProcessing.Phase2;
+using OrderProcessing.Phase3;
 
 internal static class Program
 {
@@ -12,9 +13,24 @@ internal static class Program
                 case "phase1":
                     await new Phase1Runner().RunAsync();
                     return;
-
                 case "phase2":
                     await new Phase2Runner().RunAsync();
+                    return;
+                case "phase3":
+                    using (var cts = new CancellationTokenSource())
+                    {
+                        Console.CancelKeyPress += (_, e) =>
+                        {
+                            e.Cancel = true;
+                            cts.Cancel();
+                        };
+                        int cancelIndex = Array.FindIndex(args, a =>
+                            a.Equals("--cancel-after", StringComparison.OrdinalIgnoreCase));
+                        if (cancelIndex >= 0 && cancelIndex + 1 < args.Length &&
+                            int.TryParse(args[cancelIndex + 1], out int cancelAfterMs) && cancelAfterMs > 0)
+                            cts.CancelAfter(cancelAfterMs);
+                        await new Phase3Runner().RunAsync(cts.Token);
+                    }
                     return;
             }
         }
@@ -22,18 +38,14 @@ internal static class Program
         Console.WriteLine("Order Processing System");
         Console.WriteLine("1. Phase 1 - Sync vs Async");
         Console.WriteLine("2. Phase 2 - Concurrent Processing");
+        Console.WriteLine("3. Phase 3 - Full Checkout Workflow");
         Console.WriteLine("0. Exit");
         Console.Write("Select an option: ");
-
         switch (Console.ReadLine())
         {
-            case "1":
-                await new Phase1Runner().RunAsync();
-                break;
-
-            case "2":
-                await new Phase2Runner().RunAsync();
-                break;
+            case "1": await new Phase1Runner().RunAsync(); break;
+            case "2": await new Phase2Runner().RunAsync(); break;
+            case "3": await new Phase3Runner().RunAsync(); break;
         }
     }
 }
