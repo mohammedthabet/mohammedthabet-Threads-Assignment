@@ -1,8 +1,5 @@
 ﻿# Assignment 04 — Menu Views
 
-Student name: [Your Name]
-Group / ID: [Your Group / ID]
-
 ## What is wrong
 
 The original implementation uses Views++ while eight threads update the same counter concurrently. The increment is not atomic, so updates can be lost. In the baseline run, the expected count was 400000, but the actual count was 142264.
