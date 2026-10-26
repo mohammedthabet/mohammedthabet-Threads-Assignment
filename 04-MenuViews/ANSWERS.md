@@ -19,3 +19,9 @@ The project was built and run three times. Each run must report:
 
 Expected: 400000
 Actual:   400000
+
+## When would you protect this update differently?
+
+For a single counter, Interlocked.Increment is a simple and efficient choice.
+
+If an update involves multiple shared fields or several operations that must stay consistent together, I would use lock to protect the entire critical section.
