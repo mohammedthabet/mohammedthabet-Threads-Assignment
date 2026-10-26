@@ -1,6 +1,7 @@
-﻿using OrderProcessing.Phase1;
+using OrderProcessing.Phase1;
 using OrderProcessing.Phase2;
 using OrderProcessing.Phase3;
+using OrderProcessing.Phase4;
 
 internal static class Program
 {
@@ -17,6 +18,8 @@ internal static class Program
                     await new Phase2Runner().RunAsync();
                     return;
                 case "phase3":
+                case "phase4":
+                case "all":
                     using (var cts = new CancellationTokenSource())
                     {
                         Console.CancelKeyPress += (_, e) =>
@@ -29,7 +32,20 @@ internal static class Program
                         if (cancelIndex >= 0 && cancelIndex + 1 < args.Length &&
                             int.TryParse(args[cancelIndex + 1], out int cancelAfterMs) && cancelAfterMs > 0)
                             cts.CancelAfter(cancelAfterMs);
-                        await new Phase3Runner().RunAsync(cts.Token);
+
+                        string mode = args[0].ToLowerInvariant();
+                        if (mode == "all")
+                        {
+                            await new Phase1Runner().RunAsync();
+                            await new Phase2Runner().RunAsync();
+                            await new Phase3Runner().RunAsync(cts.Token);
+                            cts.Token.ThrowIfCancellationRequested();
+                            await new Phase4Runner().RunAsync(cts.Token);
+                        }
+                        else if (mode == "phase3")
+                            await new Phase3Runner().RunAsync(cts.Token);
+                        else
+                            await new Phase4Runner().RunAsync(cts.Token);
                     }
                     return;
             }
@@ -39,6 +55,7 @@ internal static class Program
         Console.WriteLine("1. Phase 1 - Sync vs Async");
         Console.WriteLine("2. Phase 2 - Concurrent Processing");
         Console.WriteLine("3. Phase 3 - Full Checkout Workflow");
+        Console.WriteLine("4. Phase 4 - Scale-Up");
         Console.WriteLine("0. Exit");
         Console.Write("Select an option: ");
         switch (Console.ReadLine())
@@ -46,6 +63,7 @@ internal static class Program
             case "1": await new Phase1Runner().RunAsync(); break;
             case "2": await new Phase2Runner().RunAsync(); break;
             case "3": await new Phase3Runner().RunAsync(); break;
+            case "4": await new Phase4Runner().RunAsync(); break;
         }
     }
 }
