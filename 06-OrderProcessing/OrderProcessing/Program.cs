@@ -1,3 +1,4 @@
+using OrderProcessing.Shared.Storage;
 using OrderProcessing.Phase1;
 using OrderProcessing.Phase2;
 using OrderProcessing.Phase3;
@@ -14,6 +15,28 @@ internal static class Program
                 case "phase1":
                     await new Phase1Runner().RunAsync();
                     return;
+                case "race-test":
+                {
+                    await DataSeeder.ResetAsync();
+
+                    string dataDirectory = Path.Combine(
+                        AppContext.BaseDirectory, "Data");
+
+                    var store = new JsonFileStore(dataDirectory);
+                    var products = new ProductRepository(store);
+
+                    try
+                    {
+                        await new RaceConditionDemo(
+                            store, products).RunAsync();
+                    }
+                    finally
+                    {
+                        await DataSeeder.ResetAsync();
+                    }
+
+                    return;
+                }
                 case "phase2":
                     await new Phase2Runner().RunAsync();
                     return;

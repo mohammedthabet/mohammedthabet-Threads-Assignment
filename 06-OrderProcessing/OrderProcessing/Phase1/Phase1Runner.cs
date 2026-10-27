@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using OrderProcessing.Shared.Logging;
 using OrderProcessing.Shared.Models;
 using OrderProcessing.Shared.Storage;
@@ -52,12 +52,20 @@ public sealed class Phase1Runner
             orderRepository);
 
         Stopwatch asyncTimer = Stopwatch.StartNew();
+        Stopwatch asyncValidationTimer = new();
+        Stopwatch asyncSaveTimer = new();
 
         foreach (Order order in incomingOrders)
         {
             ct.ThrowIfCancellationRequested();
+
+            asyncValidationTimer.Start();
             await asyncValidator.ValidateOrderAsync(order, ct);
+            asyncValidationTimer.Stop();
+
+            asyncSaveTimer.Start();
             await orderRepository.SaveAsync(order, ct);
+            asyncSaveTimer.Stop();
         }
 
         asyncTimer.Stop();
@@ -75,7 +83,9 @@ public sealed class Phase1Runner
             Console.WriteLine($"  - Order #{order.Id}: {order.FailureReason}");
 
         Console.WriteLine($"Sync Time:  {syncTimer.Elapsed.TotalSeconds:F1} seconds");
-        Console.WriteLine($"Async Time: {asyncTimer.Elapsed.TotalSeconds:F1} seconds");
+        Console.WriteLine($"Async Time: {asyncValidationTimer.Elapsed.TotalSeconds:F1} seconds (validation only)");
+        Console.WriteLine($"Async Save Time: {asyncSaveTimer.Elapsed.TotalSeconds:F1} seconds");
+        Console.WriteLine($"Async Total Time: {asyncTimer.Elapsed.TotalSeconds:F1} seconds");
         Console.WriteLine($"orders.json now contains {allOrders.Count} records.");
 
         bool passed =
